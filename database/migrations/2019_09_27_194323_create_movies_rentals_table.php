@@ -14,7 +14,7 @@ class CreateMoviesRentalsTable extends Migration
     public function up()
     {
         Schema::create('movies_rentals', function (Blueprint $table) {
-            $table->increments('id_rent')->unsigned();
+            $table->increments('id_rental')->unsigned();
             $table->dateTime('rent_date');
             $table->dateTime('return_date');
             $table->char('state',1)->default('p');//States can be p (pending), r (returned)

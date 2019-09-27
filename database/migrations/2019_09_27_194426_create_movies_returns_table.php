@@ -18,8 +18,8 @@ class CreateMoviesReturnsTable extends Migration
             $table->dateTime('return_date');
             $table->char('status',1)->default('d');//States can be o (on time), d (delayed)
             $table->decimal('penalty',4,2)->default(0);//Recharge over delayed return
-            $table->integer('id_rent')->unsigned();
-            $table->foreign('id_rent')->references('id_rent')->on('movies_rentals');
+            $table->integer('id_rental')->unsigned();
+            $table->foreign('id_rental')->references('id_rental')->on('movies_rentals');
         });
     }
 
@@ -31,7 +31,7 @@ class CreateMoviesReturnsTable extends Migration
     public function down()
     {
         Schema::table('movies_returns', function(Blueprint $table) {
-            $table -> dropForeign('movies_returns_id_rent_foreign');
+            $table -> dropForeign('movies_returns_id_rental_foreign');
         });
         Schema::dropIfExists('movies_returns');
     }
