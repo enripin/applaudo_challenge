@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Rol extends Model
+class Role extends Model
 {
     protected $table = 'roles';
-    protected $primaryKey = 'id_rol';
+    protected $primaryKey = 'id_role';
 
     public function users(){
-        return $this->hasMany('App\Models\User','id_rol','id_rol');
+        return $this->hasMany('App\Models\User','id_role','id_role');
     }
 }

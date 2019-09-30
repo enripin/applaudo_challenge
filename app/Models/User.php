@@ -19,15 +19,15 @@ class User extends Authenticatable implements JWTSubject
     ];
 
     protected $hidden = [
-        'password', 'remember_token', 'id_rol'
+        'password', 'remember_token', 'id_role'
     ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
 
-    public function rol(){
-        return $this->belongsTo('App\Models\Rol','id_rol','id_rol');
+    public function role(){
+        return $this->belongsTo('App\Models\Role','id_role','id_role');
     }
 
     /**

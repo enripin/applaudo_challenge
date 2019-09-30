@@ -18,7 +18,7 @@ class UsersTableSeeder extends Seeder
         $admin->first_name='Roberto';
         $admin->last_name='Pineda';
         $admin->email_verified_at=now();
-        $admin->id_rol=1;
+        $admin->id_role=1;
         $admin->password=Hash::make('password');
         $admin->save();
 
@@ -27,7 +27,7 @@ class UsersTableSeeder extends Seeder
         $client->first_name='Riqui';
         $client->last_name='Bonilla';
         $client->email_verified_at=now();
-        $client->id_rol=1;
+        $client->id_role=1;
         $client->password=Hash::make('password');
         $client->save();
 
