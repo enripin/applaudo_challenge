@@ -21,8 +21,6 @@ class CreateUsersTable extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->timestamps();
-            $table->integer('id_role')->unsigned();
-            $table->foreign('id_role')->references('id_role')->on('roles');
         });
     }
 
@@ -33,9 +31,6 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
-        Schema::table('users', function(Blueprint $table) {
-            $table -> dropForeign('users_id_role_foreign');
-        });
         Schema::dropIfExists('users');
     }
 }

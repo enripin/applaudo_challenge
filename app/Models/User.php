@@ -6,10 +6,11 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use Notifiable;
+    use Notifiable, HasRoles;
 
     protected $table = 'users';
     protected $primaryKey = 'id_user';
@@ -25,10 +26,6 @@ class User extends Authenticatable implements JWTSubject
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-
-    public function role(){
-        return $this->belongsTo('App\Models\Role','id_role','id_role');
-    }
 
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.
