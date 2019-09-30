@@ -14,3 +14,5 @@
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/users/verify/{token}', 'Auth\VerificationController@verifyUser');

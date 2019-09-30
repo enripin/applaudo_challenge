@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\User;
-use Illuminate\Foundation\Auth\RegistersUsers;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Request;
+use App\Models\VerifyEmail;
+use Spatie\Permission\Models\Role;
+use App\Mail\VerifyMail;
 
 class RegisterController extends Controller
 {
@@ -16,57 +18,41 @@ class RegisterController extends Controller
     |--------------------------------------------------------------------------
     |
     | This controller handles the registration of new users as well as their
-    | validation and creation. By default this controller uses a trait to
-    | provide this functionality without requiring any additional code.
+    | validation and creation.
     |
     */
 
-    use RegistersUsers;
 
     /**
-     * Where to redirect users after registration.
+     * Create a new user and send a validation email.
      *
-     * @var string
+     * @param  Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    protected $redirectTo = '/home';
-
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    protected function register(Request $request)
     {
-        $this->middleware('guest');
-    }
+        $email=$request->input('email');
 
-    /**
-     * Get a validator for an incoming registration request.
-     *
-     * @param  array  $data
-     * @return \Illuminate\Contracts\Validation\Validator
-     */
-    protected function validator(array $data)
-    {
-        return Validator::make($data, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
-    }
+        if (User::where('email', '=', $email)->exists()) {
+            return response()->json(['error' => 'Email already used'], 400);
+        }else{
+            $nUser=User::create([
+                'first_name'=>$request->input('first_name'),
+                'last_name'=>$request->input('last_name'),
+                'password'=>Hash::make($request->input('password')),
+                'email'=>$email,
+            ]);
 
-    /**
-     * Create a new user instance after a valid registration.
-     *
-     * @param  array  $data
-     * @return \App\User
-     */
-    protected function create(array $data)
-    {
-        return User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
+            $nUser->assignRole(Role::findByName('client', 'api'));
+
+            //Sending verification link to email
+            $verifyUser = VerifyEmail::create([
+                'id_user' => $nUser->id_user,
+                'token' => sha1(time())
+            ]);
+            \Mail::to($nUser->email)->send(new VerifyMail($nUser));
+
+            return response()->json(['message' => 'User created. A verification link was sent to the email '.$nUser->email], 201);
+        }
     }
 }

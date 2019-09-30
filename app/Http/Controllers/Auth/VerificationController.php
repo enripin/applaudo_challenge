@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\VerifiesEmails;
+use App\Models\VerifyEmail;
 
 class VerificationController extends Controller
 {
@@ -18,24 +18,40 @@ class VerificationController extends Controller
     |
     */
 
-    use VerifiesEmails;
-
-    /**
-     * Where to redirect users after verification.
-     *
-     * @var string
-     */
-    protected $redirectTo = '/home';
-
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    public function verifyUser($token)
     {
-        $this->middleware('auth');
-        $this->middleware('signed')->only('verify');
-        $this->middleware('throttle:6,1')->only('verify', 'resend');
+        $verifyUser = VerifyEmail::where('token', $token)->first();
+        if(isset($verifyUser) ){
+            $user = $verifyUser->user;
+            if($user->verified) {
+                $verifyUser->user->email_verified_at = now();
+                $verifyUser->user->save();
+                $status = "Your e-mail is verified. You can now use your credential with the API.";
+            } else {
+                $status = "Your e-mail is already verified. You can now use your credential with the API.";
+            }
+        } else {
+            $status="Sorry your email cannot be identified.";
+        }
+        echo $status;
+    }
+
+    /**
+     * Resend the email verification notification.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function resend(Request $request)
+    {
+        if ($request->user()->hasVerifiedEmail()) {
+            return response()->json('User already have verified email!', 422);
+//            return redirect($this->redirectPath());
+        }
+
+        $request->user()->sendEmailVerificationNotification();
+
+        return response()->json('The notification has been resubmitted');
+//        return back()->with('resent', true);
     }
 }

@@ -18,8 +18,9 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::group(['prefix' => 'auth',], function () {
-    Route::post('login', 'AuthController@login')->name('login');
-    Route::post('logout', 'AuthController@logout');
-    Route::post('refresh', 'AuthController@refresh');
-    Route::post('me', 'AuthController@me');
+    Route::post('login', 'Auth\LoginController@login')->name('login');
+    Route::post('logout', 'Auth\LoginController@logout');
+    Route::post('refresh', 'Auth\LoginController@refresh');
+    Route::post('me', 'Auth\LoginController@me');
+    Route::post('register', 'Auth\RegisterController@register');
 });

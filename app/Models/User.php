@@ -36,6 +36,7 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->getKey();
     }
+
     /**
      * Return a key value array, containing any custom claims to be added to the JWT.
      *
@@ -44,5 +45,13 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    public function verifyUser(){
+        return $this->hasOne('App\Models\VerifyEmail','id_user','id_user');
+    }
+
+    public function getVerifiedAttribute(){
+        return (is_null($this->email_verified_at)===true)?true:false;
     }
 }

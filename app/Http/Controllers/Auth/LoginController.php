@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\Request;
+use App\Models\User;
 
 class LoginController extends Controller
 {
@@ -18,22 +19,71 @@ class LoginController extends Controller
     |
     */
 
-    use AuthenticatesUsers;
+    public function __construct(){
+        $this->middleware('jwt', ['except' => ['login']]);
+    }
 
     /**
-     * Where to redirect users after login.
-     *
-     * @var string
+     * Get a JWT via given credentials.
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    protected $redirectTo = '/home';
+    public function login(Request $request){
+        $email=$request->input('email');
+        $password=$request->input('password');
+        $credentials = array("email"=>$email,"password"=>$password);
+        if (!$token = auth('api')->attempt($credentials)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }else{//If the user credentials are right
+            $user=User::where("email",$email)->first();
+            if($user->verified){
+                return response()->json(['error' => 'Account not verified'], 401);
+            }
+        }
+        return $this->respondWithToken($token);
+    }
 
     /**
-     * Create a new controller instance.
+     * Log the user out (Invalidate the token).
      *
-     * @return void
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function __construct()
+    public function logout(){
+        auth('api')->logout();
+        return response()->json(['message' => 'Successfully logged out'], 200);
+    }
+
+    /**
+     * Refresh a token.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function refresh(){
+        return $this->respondWithToken(auth('api')->refresh(), 200);
+    }
+
+    /**
+     * Get the authenticated User.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function me(){
+        return response()->json(auth('api')->user(), 200);
+    }
+
+    /**
+     * Get the token array structure.
+     *
+     * @param  string $token
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function respondWithToken($token)
     {
-        $this->middleware('guest')->except('logout');
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth('api')->factory()->getTTL() * 60
+        ], 200);
     }
 }
