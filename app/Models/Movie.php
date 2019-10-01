@@ -9,12 +9,16 @@ class Movie extends Model
     protected $table = 'movies';
     protected $primaryKey = 'id_movie';
 
-    public function scopeAvailable($query)
+    public function scopeAvailable($query,$value)
     {
-        return $query->where('availability', '>', 0);
+        if($value){
+            return $query->where('availability', '>', 0);
+        }else{
+            return $query->where('availability', '<=', 0);
+        }
     }
 
     public function likes(){
-        return $this->belongsToMany('App\Models\Users', 'user_likes', 'id_movie', 'id_user');
+        return $this->belongsToMany('App\Models\User', 'users_likes', 'id_movie', 'id_user');
     }
 }

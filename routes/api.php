@@ -24,3 +24,10 @@ Route::group(['prefix' => 'auth',], function () {
     Route::post('me', 'Auth\LoginController@me');
     Route::post('register', 'Auth\RegisterController@register');
 });
+
+Route::group(['prefix' => 'users',], function () {
+    Route::post('password', 'Auth\ResetPasswordController@sendResetLinkEmail');
+    Route::patch('password', 'Auth\ResetPasswordController@doReset');
+});
+
+Route::resource('movies','MoviesController');

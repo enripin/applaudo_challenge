@@ -4,9 +4,11 @@ namespace App\Exceptions;
 
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use \Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use \Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use \Tymon\JWTAuth\Exceptions\JWTException;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class Handler extends ExceptionHandler
 {
@@ -55,6 +57,8 @@ class Handler extends ExceptionHandler
             return response()->json(['error' => 'token is invalid'], 400);
         } elseif ($exception instanceof JWTException) {
             return response()->json(['error' => 'token absent'], 400);
+        } elseif ($exception instanceof AuthorizationException){
+            return response()->json(['error' => 'This action is unauthorized'], 400);
         }
 
         return parent::render($request, $exception);

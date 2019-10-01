@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Models\VerifyEmail;
 use Spatie\Permission\Models\Role;
-use App\Mail\VerifyMail;
+use App\Notifications\VerifyEmailNotification;
 
 class RegisterController extends Controller
 {
@@ -31,6 +31,13 @@ class RegisterController extends Controller
      */
     protected function register(Request $request)
     {
+        $request->validate([
+            'email' => 'required|string|email',
+            'password' => 'required|string',
+            'first_name' => 'required|string',
+            'last_name' => 'required|string'
+        ]);
+
         $email=$request->input('email');
 
         if (User::where('email', '=', $email)->exists()) {
@@ -50,7 +57,9 @@ class RegisterController extends Controller
                 'id_user' => $nUser->id_user,
                 'token' => sha1(time())
             ]);
-            \Mail::to($nUser->email)->send(new VerifyMail($nUser));
+            $nUser->notify(
+                new VerifyEmailNotification($nUser)
+            );
 
             return response()->json(['message' => 'User created. A verification link was sent to the email '.$nUser->email], 201);
         }

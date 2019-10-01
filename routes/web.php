@@ -16,3 +16,5 @@ Route::get('/', function () {
 });
 
 Route::get('/users/verify/{token}', 'Auth\VerificationController@verifyUser');
+Route::post('/users/password/reset', 'Auth\ResetPasswordController@doReset');
+Route::get('/users/password/reset/{token}', 'Auth\ResetPasswordController@getResetForm');
