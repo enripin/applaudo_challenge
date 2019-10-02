@@ -11,6 +11,7 @@ $factory->define(\App\Models\Movie::class, function (Faker $faker) {
         'description'   => $faker->text,
         'rental_price'  => $faker->randomFloat(2, 1, 20),
         'sale_price'  => $faker->randomFloat(2, 5, 100),
-        'availability'  => $faker->numberBetween(0, 50)
+        'available'  => $faker->numberBetween(0, 1),
+        'stock'  => $faker->numberBetween(0, 50)
     ];
 });

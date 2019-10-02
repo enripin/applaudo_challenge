@@ -52,6 +52,6 @@ class User extends Authenticatable implements JWTSubject
     }
 
     public function getVerifiedAttribute(){
-        return (is_null($this->email_verified_at)===true)?true:false;
+        return (is_null($this->email_verified_at))?false:true;
     }
 }

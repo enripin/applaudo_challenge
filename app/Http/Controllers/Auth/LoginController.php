@@ -29,14 +29,21 @@ class LoginController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function login(Request $request){
+        $request->validate([
+            'email' => 'required|string|email',
+            'password' => 'required|string'
+        ]);
+
         $email=$request->input('email');
         $password=$request->input('password');
         $credentials = array("email"=>$email,"password"=>$password);
         if (!$token = auth('api')->attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }else{//If the user credentials are right
+
             $user=User::where("email",$email)->first();
-            if($user->verified){
+
+            if(!$user->verified){//If the email has not been verified for the account
                 return response()->json(['error' => 'Account not verified'], 401);
             }
         }

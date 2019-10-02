@@ -17,9 +17,10 @@ class CreateMoviesTable extends Migration
             $table->increments('id_movie')->unsigned();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->decimal('rental_price',4,2);
+            $table->decimal('rental_price',4,2);//Rental price per day
             $table->decimal('sale_price',4,2);
-            $table->integer('availability');
+            $table->integer('available')->default(1);//If the movie will be available for clients (0-available, 1-unavailable)
+            $table->integer('stock');
             $table->timestamps();
             $table->index('title');//For speeding up searches
         });

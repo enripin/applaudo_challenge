@@ -16,7 +16,7 @@ class CreateMoviesReturnsTable extends Migration
         Schema::create('movies_returns', function (Blueprint $table) {
             $table->increments('id_return')->unsigned();
             $table->dateTime('return_date');
-            $table->char('status',1)->default('d');//States can be o (on time), d (delayed)
+            $table->char('status',1)->default('o');//States can be o (on time), d (delayed)
             $table->decimal('penalty',4,2)->default(0);//Recharge over delayed return
             $table->integer('id_rental')->unsigned();
             $table->foreign('id_rental')->references('id_rental')->on('movies_rentals');

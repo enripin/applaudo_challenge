@@ -9,12 +9,16 @@ class Movie extends Model
     protected $table = 'movies';
     protected $primaryKey = 'id_movie';
 
+    protected $fillable = [
+        'title', 'description', 'sale_price', 'rental_price', 'available', 'stock'
+    ];
+
     public function scopeAvailable($query,$value)
     {
         if($value){
-            return $query->where('availability', '>', 0);
+            return $query->where('available', '=', 1);
         }else{
-            return $query->where('availability', '<=', 0);
+            return $query->where('available', '=', 0);
         }
     }
 

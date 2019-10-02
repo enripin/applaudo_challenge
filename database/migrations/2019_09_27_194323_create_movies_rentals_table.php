@@ -15,12 +15,12 @@ class CreateMoviesRentalsTable extends Migration
     {
         Schema::create('movies_rentals', function (Blueprint $table) {
             $table->increments('id_rental')->unsigned();
-            $table->dateTime('rent_date');
-            $table->dateTime('return_date');
+            $table->dateTime('rent_date');//System time the record was saved
+            $table->date('return_date');//The date the movie has to be returned
             $table->char('state',1)->default('p');//States can be p (pending), r (returned)
-            $table->decimal('payment',8,2);
+            $table->decimal('payment',8,2);//This will be calculated based on the number of days the movie will be rented and the rental price by day
             $table->integer('id_movie')->unsigned();
-            $table->integer('id_user')->unsigned();
+            $table->integer('id_user')->unsigned();//User who rented the movie
             $table->foreign('id_movie')->references('id_movie')->on('movies');
             $table->foreign('id_user')->references('id_user')->on('users');
         });

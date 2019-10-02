@@ -58,7 +58,7 @@ class Handler extends ExceptionHandler
         } elseif ($exception instanceof JWTException) {
             return response()->json(['error' => 'token absent'], 400);
         } elseif ($exception instanceof AuthorizationException){
-            return response()->json(['error' => 'This action is unauthorized'], 400);
+            return response()->json(['error' => 'This action is unauthorized'], 401);
         }
 
         return parent::render($request, $exception);
