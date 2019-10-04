@@ -10,7 +10,7 @@
 </head>
 <body>
     <div class="col-md-4 offset-md-4">
-        <form action="{{url('/users/password/reset')}}" method="post" class="form-recovery">
+        <form action="{{route('do-reset-password',['id_user'=>$user->id_user])}}" method="post" class="form-recovery">
           <div class="text-center mb-4">
             <h1 class="h3 mb-3 font-weight-normal">Reset your password</h1>
           </div>

@@ -41,10 +41,12 @@ class VerifyEmailNotification extends Notification
      */
     public function toMail($notifiable)
     {
-        $url = url('users/verify', $this->user->verifyUser->token);
+        $url = url('users/'.$this->user->id_user.'/verified?token='.$this->user->verifyUser->token);
         return (new MailMessage)
                     ->line('Welcome to the site '.$this->user->first_name.' '.$this->user->last_name)
-                    ->line('Your registered email is '.$this->user->email.' , Please click on the below link to verify your email account')
+                    ->line('Your registered email is '.$this->user->email)
+                    ->line('Your verification token is: '.$this->user->verifyUser->token)
+                    ->line('You also can verify your account by click on the below link')
                     ->action('Verify Email', $url)
                     ->line('Thank you for using our application!');
     }

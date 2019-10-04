@@ -4,10 +4,15 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\PasswordReset;
 use Illuminate\Support\Facades\Hash;
 use App\Models\VerifyEmail;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 use App\Notifications\VerifyEmailNotification;
+use App\Notifications\ResetPasswordRequestNotification;
+use App\Notifications\ResetPasswordSuccessNotification;
+use Carbon\Carbon;
 
 class UsersController extends Controller
 {
@@ -21,22 +26,120 @@ class UsersController extends Controller
         //
     }
 
-    public function verifyUser($token)
+    /**
+     * Create token password reset
+     *
+     * @param  Request $request
+     * @param  integer $id_user
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function sendResetLinkEmail(Request $request, $id_user)
     {
-        $verifyUser = VerifyEmail::where('token', $token)->first();
+        //Ask id_user and email for security
+        $user = User::where('id_user',$id_user)->where('email',$request->input('email'))->first();
+        if (!$user)
+            return response()->json([
+                'message' => "We can't find the requested user."
+            ], 404);
+        $passwordReset = PasswordReset::updateOrCreate(
+            ['email' => $user->email], ['email' => $user->email,'token' => sha1(time())]
+        );
+        if ($user && $passwordReset){
+            $user->notify(
+                new ResetPasswordRequestNotification($passwordReset->token, $user->id_user)
+            );
+        }
+        return response()->json([
+            'message' => 'Recovery email sent.'
+        ], 200);
+    }
+
+    public function getResetForm(Request $request, $id_user){
+        $token=$request->input('token');
+        $user=User::find($id_user);
+        if(is_null($user)){
+            return response()->json([
+                'message' => 'Invalid url.'
+            ], 404);
+        }
+        $passwordReset = PasswordReset::where('email',$user->email)->where('token', $token)
+            ->first();
+        if (!$passwordReset)
+            return response()->json([
+                'message' => 'This password reset token is invalid.'
+            ], 404);
+        if (Carbon::parse($passwordReset->updated_at)->addMinutes(720)->isPast()) {
+            $passwordReset->delete();
+            return response()->json([
+                'message' => 'This password reset token is invalid.'
+            ], 404);
+        }
+        return view('password.reset', compact('token','user'));
+    }
+
+    /**
+     * Reset password
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function doReset(Request $request, $id_user)
+    {
+        $request->validate([
+            'email' => 'required|string|email',
+            'password' => 'required|string',
+            'token' => 'required|string'
+        ]);
+        $passwordReset = PasswordReset::where([
+            ['token', $request->input('token')],
+            ['email', $request->input('email')]
+        ])->first();
+
+        if (!$passwordReset)
+            return response()->json([
+                'message' => 'This password reset token is invalid.'
+            ], 404);
+
+        if (Carbon::parse($passwordReset->updated_at)->addMinutes(720)->isPast()) {
+            $passwordReset->delete();
+            return response()->json([
+                'message' => 'This password reset token has expired.'
+            ], 404);
+        }
+
+        $user = User::where('email', $passwordReset->email)->where('id_user',$id_user)->first();
+        if (!$user)
+            return response()->json([
+                'message' => "We can't find a user with that e-mail address."
+            ], 404);
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+        $passwordReset->delete();
+
+        $user->notify(new ResetPasswordSuccessNotification());
+
+        return response()->json([
+            'message' => 'Password updated successfully'
+        ], 200);
+    }
+
+    public function verifyUser(Request $request, $id_user)
+    {
+        $token=$request->token;
+        $verifyUser = VerifyEmail::where('token', $token)->where('id_user',$id_user)->first();
         if(isset($verifyUser) ){
             $user = $verifyUser->user;
             if(!$user->verified) {
                 $verifyUser->user->email_verified_at = now();
                 $verifyUser->user->save();
-                $status = "Your e-mail is verified. You can now use your credential with the API.";
+                return response()->json(['message'=>'Your e-mail is verified. You can now use your credential with the API.'],200);
             } else {
-                $status = "Your e-mail is already verified. You can now use your credential with the API.";
+                return response()->json(['message'=>'Your e-mail is already verified.'],400);
             }
         } else {
-            $status="Sorry your email cannot be identified.";
+            return response()->json(['message'=>'Your e-mail could not be verified'],400);
         }
-        echo $status;
     }
 
     public function resendVerification($id_user)
@@ -44,15 +147,15 @@ class UsersController extends Controller
         $user=User::find($id_user);
         if(!is_null($user)){
             if($user->verified){
-                return response()->json('User already have verified email!', 422);
+                return response()->json(['message'=>'User already have verified email!'], 400);
             }else{
                 $user->notify(
                     new VerifyEmailNotification($user)
                 );
-                return response()->json('The notification has been resubmitted',200);
+                return response()->json(['message'=>'The verification email has been resubmitted'],200);
             }
         }else{
-            return response()->json('User not found!', 404);
+            return response()->json(['message'=>'User not found!'], 404);
         }
     }
 
@@ -142,4 +245,38 @@ class UsersController extends Controller
     {
         //
     }
+
+    /**
+     * Change the rol of the given user.
+     *
+     * @param  Request  $request
+     * @param  int  $id_user
+     * @return \Illuminate\Http\Response
+     */
+    public function changeRole(Request $request, $id_user)
+    {
+        if(is_null(auth()->user()) || !auth()->user()->hasPermissionTo(Permission::findByName('users.change-role','api'))){
+            return response()->json(['error' => 'This action is unauthorized'], 401);
+        }
+
+        $user=User::find($id_user);
+        if(is_null($user)){
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        $role=Role::where('name',$request->input('role'))->first();
+        if(is_null($role)){
+            return response()->json(['message' => 'Role not found'], 404);
+        }
+
+        foreach($user->roles as $rol){
+            $user->removeRole($rol);
+        }
+        $user->assignRole($role);
+
+        return response()->json(['message' => 'Role changed successfully'], 200);
+
+    }
+
+
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use App\Http\Resources\RoleResource;
 
 class RolesAndPermissionsController extends Controller
 {
@@ -18,10 +19,22 @@ class RolesAndPermissionsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function indexRoles()
     {
         if(auth()->user()->hasPermissionTo(Permission::findByName('users.change-role','api'))){
-            return Role::all();
+            return RoleResource::collection(Role::all());
+        }
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function indexPermissions()
+    {
+        if(auth()->user()->hasPermissionTo(Permission::findByName('users.change-role','api'))){
+            return Permission::all();
         }
     }
 

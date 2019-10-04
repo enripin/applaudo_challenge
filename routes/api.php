@@ -28,7 +28,7 @@ Route::group(['prefix' => 'users'], function () {
     Route::patch('{id_user}/verified', 'UsersController@verifyUser');//Verify a user given the token and email
     Route::post('{id_user}/password', 'UsersController@sendResetLinkEmail');//Creates a reset token and sends it by email
     Route::patch('{id_user}/password', 'UsersController@doReset');//Update the user's password
-    Route::put('{id_user}/role', 'UsersController@changeRole');//Update the user's role
+    Route::patch('{id_user}/role', 'UsersController@changeRole');//Update the user's role
 });
 
 Route::group(['prefix' => 'users/login'], function () {
