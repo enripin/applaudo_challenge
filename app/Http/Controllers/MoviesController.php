@@ -41,6 +41,15 @@ class MoviesController extends Controller
         }else{
             $movies=Movie::available(true)->withCount('likes');
         }
+
+        if($request->has('search') && $request->input('search')!=""){
+            $this->words=explode(' ',$request->input('search'));
+            $movies=$movies->where(function($query){
+                foreach($this->words as $word){
+                    $query->orWhere('title','like','%'.$word.'%');
+                }
+            });
+        }
         //Setting default values to order the results
         $order_by='title';
         $direction='asc';
