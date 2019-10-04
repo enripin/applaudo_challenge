@@ -10,14 +10,27 @@ use App\Http\Resources\RoleResource;
 class RolesAndPermissionsController extends Controller
 {
 
+    /*
+    |--------------------------------------------------------------------------
+    | Movies Returns Controller
+    |--------------------------------------------------------------------------
+    |
+    | This controller handles roles and permissions CRUD operations
+    | Right now there are only two roles(admin and client) in seeders
+    | and only admin has permissions added
+    | At this moment only show operation has been implemented for roles and permissions
+    |
+    */
+
+    //Using middleware to limit access for not logged users
     public function __construct(){
         $this->middleware('jwt');
     }
 
     /**
-     * Display a listing of the resource.
+     * Display a listing of the roles.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function indexRoles()
     {
@@ -27,9 +40,9 @@ class RolesAndPermissionsController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
+     * Display a listing of the permissions.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function indexPermissions()
     {

@@ -10,41 +10,49 @@ use Carbon\Carbon;
 
 class MoviesRentalsController extends Controller
 {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Movies Rentals Controller
+    |--------------------------------------------------------------------------
+    |
+    | This controller handles movies rentals CRUD operations
+    | At this moment only create operation has been implemented
+    |
+    */
+
+    //Using middleware to limit access for not logged users
     public function __construct(){
         $this->middleware('jwt');
     }
 
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
+     * Store a newly created rentals in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request, $id_movie)
     {
-        //The rental price will be calculated from the daily rental price and the number of days the movie will be rented
+        /* $request must contain:
+         * (string) token: User's authorization token
+         * (date) return_date: Date the client has to return the movie
+         * The rental payment will be calculated from the daily rental price and the number of days the movie will be rented
+         */
+
 
         $request->validate([
             'return_date' => 'required|date|after:now'
         ]);
+
         $movie=Movie::find($id_movie);
-        if(!is_null($movie)){
-            if($movie->available==1 && $movie->stock>=1){
+        if(!is_null($movie)){//Validating the id_movie
+            if($movie->available==1 && $movie->stock>=1){//Validating the movie is available and has stocks
 
                 $date = Carbon::parse($request->input('return_date'));
-                $now = Carbon::now();
+                $now = Carbon::parse(date('Y-m-d'));
 
-                $diff = $date->diffInDays($now)+1;
+                $diff = $date->diffInDays($now);//Number of days the movie will be rented
 
                 $nRental=MovieRental::create([
                     'rent_date' => date("Y-m-d H:i:s"),
@@ -65,7 +73,7 @@ class MoviesRentalsController extends Controller
                 ], 201);
             }else{
                 return response()->json([
-                    'error' => 'Movie not available.'
+                    'message' => 'Movie not available or without stock.'
                 ], 400);
             }
         }else{
@@ -73,6 +81,16 @@ class MoviesRentalsController extends Controller
                 'error' => 'Movie not found.'
             ], 404);
         }
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        //
     }
 
     /**

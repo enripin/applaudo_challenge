@@ -14,21 +14,24 @@ class LoginController extends Controller
     |--------------------------------------------------------------------------
     |
     | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
+    | generates access token. The controller uses a trait
     | to conveniently provide its functionality to your applications.
     |
     */
 
+    //Using middleware to limit access for not logged users
     public function __construct(){
         $this->middleware('jwt', ['except' => ['login']]);
     }
 
     /**
      * Get a JWT via given credentials.
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request (request has to contain email and password for the user)
      * @return \Illuminate\Http\JsonResponse
      */
     public function login(Request $request){
+
+        //Validating fields
         $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string'
@@ -37,52 +40,54 @@ class LoginController extends Controller
         $email=$request->input('email');
         $password=$request->input('password');
         $credentials = array("email"=>$email,"password"=>$password);
-        if (!$token = auth('api')->attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        if (!$token = auth('api')->attempt($credentials)) {//Validating user and password to generate JWT token
+            return response()->json(['message' => 'Unauthorized'], 401);
         }else{//If the user credentials are right
 
+            //Checking is the account has been already verified by email
             $user=User::where("email",$email)->first();
-
-            if(!$user->verified){//If the email has not been verified for the account
-                return response()->json(['error' => 'Account not verified'], 401);
+            if(!$user->verified){
+                return response()->json(['message' => 'Account not verified'], 401);
             }
         }
         return $this->respondWithToken($token);
     }
 
     /**
-     * Log the user out (Invalidate the token).
+     * Log the user out (Invalidate the authentication token).
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function logout(){
+        //A token has to be send in the request
         auth('api')->logout();
         return response()->json(['message' => 'Successfully logged out'], 200);
     }
 
     /**
-     * Refresh a token.
+     * Refresh a token (generates a new token).
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function refresh(){
-        return $this->respondWithToken(auth('api')->refresh(), 200);
+        //A token has to be send in the request
+        return $this->respondWithToken(auth('api')->refresh());
     }
 
     /**
-     * Get the authenticated User.
+     * Get the authenticated User information.
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function me(){
+        //A token has to be send in the request
         return response()->json(auth('api')->user(), 200);
     }
 
     /**
      * Get the token array structure.
      *
-     * @param  string $token
-     *
+     * @param  string $token (authorization token)
      * @return \Illuminate\Http\JsonResponse
      */
     protected function respondWithToken($token)

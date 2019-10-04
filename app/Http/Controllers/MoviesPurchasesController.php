@@ -10,35 +10,40 @@ use App\Http\Resources\PurchaseResource;
 
 class MoviesPurchasesController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | Movies Purchases Controller
+    |--------------------------------------------------------------------------
+    |
+    | This controller handles movies purchases CRUD operations
+    | At this moment only create operation has been implemented
+    |
+    */
 
+    //Using middleware to limit access for not logged users
     public function __construct(){
         $this->middleware('jwt');
     }
 
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
+     * Store a newly created movie purchase in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
+        /* $request must contain:
+         * (string) token: User's authorization token
+         * (array) movies('(int)movie_id'=>'(int)number of copies to be purchased')
+         */
+
         $movies=$request->input('movies');
-        if(!is_array($movies) || count($movies)==0){
+        if(!is_array($movies) || count($movies)==0){//Validating movies field to be a valid array
             return response()->json(['error' => 'Bad request'], 400);
         }
 
-        //Checking if all movies in array are available
+        //Checking if all movies in array are available and with enough stock
         foreach($movies as $id_movie => $number){
             $movie_info=Movie::find($id_movie);
             if(is_null($movie_info) || $movie_info->available==0 || $movie_info->stock<=$number){
@@ -46,13 +51,14 @@ class MoviesPurchasesController extends Controller
             }
         }
 
+        //Creating movie purchase to generate id_purchase
         $movie_purchase=new MoviePurchase();
         $movie_purchase->purchase_date=date('Y-m-d H:i:s');
         $movie_purchase->id_user=auth()->user()->id_user;
         $movie_purchase->save();
 
-        $total_payment=0;
-        foreach($movies as $id_movie => $number){
+        $total_payment=0;//Will be used to calculate the total payment
+        foreach($movies as $id_movie => $number){//Generating details of purchase
             $movie_info=Movie::find($id_movie);
             $detail=new PurchaseDetail();
             $detail->id_purchase=$movie_purchase->id_purchase;
@@ -73,6 +79,16 @@ class MoviesPurchasesController extends Controller
             'message' => 'Purchase processed successfully',
             'data'  => new PurchaseResource($movie_purchase)
         ], 201);
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        //
     }
 
     /**

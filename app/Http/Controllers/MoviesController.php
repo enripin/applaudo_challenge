@@ -11,24 +11,48 @@ use App\Http\Requests\MovieRequest;
 
 class MoviesController extends Controller
 {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Movies Controller
+    |--------------------------------------------------------------------------
+    |
+    | This controller handles movies CRUD operations
+    |
+    */
+
+    //Using middleware to limit access for not logged users
     public function __construct(){
         $this->middleware('jwt', ['except' => ['index','show']]);
     }
 
     /**
-     * Display a listing of the resource.
+     * Display a listing of the movies. If user is admin (has movies.show-all permission)
+     * will return all movies available and unavailable
+     * For not admin users it will only return available movies
      * @param  \Illuminate\Http\Request  $request
-     * @return MovieResource
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
+        /**Possible Request $request params:
+         * (string) token: authorization token
+         * (string) available: true/false if want to filter the movies for availability status
+         * (string) search: true/false if want to filter the movies for availability status
+         * (string) order_by: title/likes_count Field used to order the results
+         * (string) direction: asc/desc ascendent/descendent order
+         * others: pagination related fields
+         */
         $movies=array();
 
+        //Validating if the request has a valid authorization token
         if($request->has("token") && is_null(auth()->user())){
             return response()->json(['error' => 'token is invalid or expired'], 400);
         }
 
+        //Validating user admin permission
         if($request->has("token") && auth()->user()->hasPermissionTo(Permission::findByName('movies.show-all','api'))){
+            //If request will be filter by availability
             if($request->has("available")){
                 if($request->input('available')=="true"){
                     $movies=Movie::available(true)->withCount('likes');
@@ -42,6 +66,7 @@ class MoviesController extends Controller
             $movies=Movie::available(true)->withCount('likes');
         }
 
+        //Making a search over the title
         if($request->has('search') && $request->input('search')!=""){
             $this->words=explode(' ',$request->input('search'));
             $movies=$movies->where(function($query){
@@ -50,6 +75,7 @@ class MoviesController extends Controller
                 }
             });
         }
+
         //Setting default values to order the results
         $order_by='title';
         $direction='asc';
@@ -72,20 +98,20 @@ class MoviesController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created movie in storage.
      *
      * @param  MovieRequest  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(MovieRequest $request)
     {
-        //Permissions and validations for this method are MovieRequest $request
+        //Permissions and validations for this method are in MovieRequest $request
         $nMovie=Movie::create([
             'title' => $request->input('title'),
             'description' => ($request->has('description')?$request->input('description'):null),
             'sale_price' => $request->input('sale_price'),
-            'rental_price' => $request->input('rental_price'),
-            'available' => $request->input('available'),
+            'rental_price' => $request->input('rental_price'),// rental price by day
+            'available' => $request->input('available'),// 0/1 available/unavailable
             'stock' => $request->input('stock'),
             'image' => ($request->has('image')?$request->input('image'):null)
         ]);
@@ -96,10 +122,10 @@ class MoviesController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified movie.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param  int  $id (id_movie)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
@@ -116,16 +142,18 @@ class MoviesController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified movie in storage.
      *
      * @param  MovieRequest  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param  int  $id (id_movie)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(MovieRequest $request, $id)
     {
+        //Permissions and validations for this method are in MovieRequest $request
+
         $movie=Movie::find($id);
-        if(!is_null($movie)){
+        if(!is_null($movie)){//If the id_movie was found
             $changes=array();/*Used for the changes log*/
             if($movie->title!=$request->input('title')){
                 $changes['prev_title']=$movie->title;
@@ -148,7 +176,7 @@ class MoviesController extends Controller
 
             $movie->save();
 
-            if(count($changes)>0){
+            if(count($changes)>0){//Saving changes in log
                 $changes['change_date']=date("Y-m-d H:i:s");
                 $changes['id_user']=auth()->user()->id_user;
                 $changes['id_movie']=$movie->id_movie;
@@ -158,7 +186,7 @@ class MoviesController extends Controller
             return response()->json([
                 'message' => 'Movie updated successfully.',
                 'data'  =>  $movie
-            ], 201);
+            ], 200);
         }else{
             return response()->json([
                 'message' => 'Movie not found.'
@@ -167,11 +195,11 @@ class MoviesController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Making the specified movie available / unavailable for not admin users.
      *
      * @param  Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param  int  $id (id_movie)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function remove(Request $request, $id)
     {
@@ -182,13 +210,13 @@ class MoviesController extends Controller
                 'available' => 'required|between:0,1'
             ]);
             $movie=Movie::find($id);
-            if(!is_null($movie)){
+            if(!is_null($movie)){//If the id_movie was found
 
                 $movie->available=$request->input('available');
                 $movie->save();
 
                 return response()->json([
-                    'message' => 'Movie updated successfully.',
+                    'message' => 'Movie availability updated successfully.',
                     'data'  =>  $movie
                 ], 200);
             }else{
@@ -196,6 +224,8 @@ class MoviesController extends Controller
                     'message' => 'Movie not found.'
                 ], 404);
             }
+        }else{
+            return response()->json(['error' => 'This action is unauthorized'], 403);
         }
 
     }
@@ -203,11 +233,12 @@ class MoviesController extends Controller
     /**
      * Remove the specified movie from storage.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param  int  $id (id_movie)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
+        //Validating users permissions
         if(auth()->user()->hasPermissionTo(Permission::findByName('movies.cud','api'))){
             $movie=Movie::find($id);
             if(!is_null($movie)){
@@ -219,13 +250,19 @@ class MoviesController extends Controller
                 return response()->json(['message' => 'Movie not found.'], 404);
             }
         }else{
-            return response()->json(['error' => 'This action is unauthorized'], 401);
+            return response()->json(['error' => 'This action is unauthorized'], 403);
         }
     }
 
-    public function like($id_movie){
+    /**
+     * Save a like record for the specified movie.
+     *
+     * @param  int  $id (id_movie)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function like($id){
         $user=auth()->user();
-        $movie=Movie::find($id_movie);
+        $movie=Movie::find($id);
         if(is_null($movie)){
             return response()->json(['message' => 'Movie not found'], 404);
         }

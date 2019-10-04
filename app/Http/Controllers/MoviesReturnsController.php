@@ -10,37 +10,41 @@ use Carbon\Carbon;
 class MoviesReturnsController extends Controller
 {
 
+    /*
+    |--------------------------------------------------------------------------
+    | Movies Returns Controller
+    |--------------------------------------------------------------------------
+    |
+    | This controller handles movies rentals CRUD operations
+    | At this moment only create operation has been implemented
+    |
+    */
+
+    //Using middleware to limit access for not logged users
     public function __construct(){
         $this->middleware('jwt');
     }
 
     /**
-     * Display a listing of the resource.
+     * Store a newly created movie return in storage.
      *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  Request  $request
+     * @param  int $id_movie
+     * @param  int $id_rental
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request, $id_movie, $id_rental)
     {
 
         $rental=MovieRental::find($id_rental);
         if(!is_null($rental)){
-            if($rental->state=='p'){//If the movie has not been returned
+            if($rental->state=='p'){//Validating if the movie has not been returned
 
                 $nReturn=new MovieReturn();
                 $nReturn->id_rental=$id_rental;
                 $nReturn->return_date=date("Y-m-d H:i:s");//The date and hour the movie was returned
 
+                //Calculating if there has been delay in return
                 $return_date=Carbon::parse($rental->return_date);
                 $now=Carbon::parse(date('Y-m-d'));
                 $days=$now->diffInDays($return_date,false);
@@ -65,19 +69,29 @@ class MoviesReturnsController extends Controller
                     return response()->json([
                         'message' => 'Movie returned successfully.',
                         'data'  => $nReturn
-                    ], 400);
+                    ], 201);
 
                 }
             }else{
                 return response()->json([
-                    'error' => 'Movie already returned.'
+                    'message' => 'Movie already returned.'
                 ], 400);
             }
         }else{
             return response()->json([
-                'error' => 'Rental record not found.'
+                'message' => 'Rental record not found.'
             ], 404);
         }
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        //
     }
 
     /**
