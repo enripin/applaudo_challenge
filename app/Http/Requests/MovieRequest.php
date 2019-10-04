@@ -14,6 +14,7 @@ class MovieRequest extends FormRequest
      */
     public function authorize()
     {
+        //Validating that the user has permissions to execute this request
         return auth()->user()->hasPermissionTo(Permission::findByName('movies.cud','api'));
     }
 

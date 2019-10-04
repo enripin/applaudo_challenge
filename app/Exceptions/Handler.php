@@ -51,14 +51,15 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
+        //Customizing messages for some exceptions
         if ($exception instanceof TokenExpiredException) {
-            return response()->json(['error' => 'token is expired'], 400);
+            return response()->json(['message' => 'token is expired'], 401);
         } elseif ($exception instanceof TokenInvalidException) {
-            return response()->json(['error' => 'token is invalid'], 400);
+            return response()->json(['message' => 'token is invalid'], 401);
         } elseif ($exception instanceof JWTException) {
-            return response()->json(['error' => 'token absent'], 400);
+            return response()->json(['message' => 'token absent'], 401);
         } elseif ($exception instanceof AuthorizationException){
-            return response()->json(['error' => 'This action is unauthorized'], 401);
+            return response()->json(['message' => 'This action is unauthorized'], 401);
         }
 
         return parent::render($request, $exception);
