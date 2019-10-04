@@ -38,6 +38,7 @@ class MoviesReturnsController extends Controller
             if($rental->state=='p'){//If the movie has not been returned
 
                 $nReturn=new MovieReturn();
+                $nReturn->id_rental=$id_rental;
                 $nReturn->return_date=date("Y-m-d H:i:s");//The date and hour the movie was returned
 
                 $return_date=Carbon::parse($rental->return_date);
