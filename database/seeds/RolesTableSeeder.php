@@ -17,22 +17,12 @@ class RolesTableSeeder extends Seeder
         $client=Role::create(['name'=>'client']);
 
         //Admin only permissions
-        Permission::create(['name'=>'movies.show-all']);
+        Permission::create(['name'=>'movies.show-all']);//Show all movies available/unavailable
         Permission::create(['name'=>'movies.cud']);//Create, Update, Delete
-        Permission::create(['name'=>'users.change-role']);
-
-        //All logged users permissions (for clients)
-        Permission::create(['name'=>'movies.rent']);
-        Permission::create(['name'=>'movies.purchase']);
-        Permission::create(['name'=>'movies.like']);
+        Permission::create(['name'=>'users.change-role']);//Change a user's role
 
         $admin->givePermissionTo([
-            'movies.show-all', 'movies.cud', 'users.change-role',
-            'movies.rent', 'movies.purchase', 'movies.like'
-        ]);
-
-        $client->givePermissionTo([
-            'movies.rent', 'movies.purchase', 'movies.like'
+            'movies.show-all', 'movies.cud', 'users.change-role'
         ]);
     }
 }

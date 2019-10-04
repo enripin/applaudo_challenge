@@ -14,9 +14,9 @@ class CreateMoviesPurchasesTable extends Migration
     public function up()
     {
         Schema::create('movies_purchases', function (Blueprint $table) {
-            $table->increments('id_rent')->unsigned();
+            $table->increments('id_purchase')->unsigned();
             $table->dateTime('purchase_date');
-            $table->decimal('total_payment',8,2);
+            $table->decimal('total_payment',8,2)->nullable();
             $table->integer('id_user')->unsigned();
             $table->foreign('id_user')->references('id_user')->on('users');
         });

@@ -10,7 +10,7 @@ class Movie extends Model
     protected $primaryKey = 'id_movie';
 
     protected $fillable = [
-        'title', 'description', 'sale_price', 'rental_price', 'available', 'stock'
+        'title', 'description', 'sale_price', 'rental_price', 'available', 'stock', 'image'
     ];
 
     public function scopeAvailable($query,$value)

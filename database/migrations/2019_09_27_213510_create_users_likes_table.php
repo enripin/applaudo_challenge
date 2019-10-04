@@ -18,7 +18,6 @@ class CreateUsersLikesTable extends Migration
             $table->integer('id_movie')->unsigned();
             $table->foreign('id_user')->references('id_user')->on('users');
             $table->foreign('id_movie')->references('id_movie')->on('movies');
-            $table->timestamps();
         });
     }
 
