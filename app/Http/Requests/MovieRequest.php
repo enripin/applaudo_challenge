@@ -29,7 +29,8 @@ class MovieRequest extends FormRequest
             'description' =>  'string',
             'rental_price' =>  'required|numeric',
             'sale_price' =>  'required|numeric',
-            'availability' =>  'required|integer'
+            'available' =>  'integer',
+            'image' =>  'active_url'
         ];
     }
 }

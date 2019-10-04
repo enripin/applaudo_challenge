@@ -20,7 +20,8 @@ class MovieResource extends JsonResource
             'description'=>$this->description,
             'rental_price'=>$this->rental_price,
             'sale_price'=>$this->sale_price,
-            'availability'=>$this->availability,
+            'available'=>$this->available,
+            'stock'=>$this->stock,
             'likes'=>$this->likes()->count()
         ];
     }

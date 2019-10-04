@@ -23,9 +23,18 @@ class MoviesController extends Controller
     public function index(Request $request)
     {
         $movies=array();
+
+        if($request->has("token") && is_null(auth()->user())){
+            return response()->json(['error' => 'token is invalid or expired'], 400);
+        }
+
         if($request->has("token") && auth()->user()->hasPermissionTo(Permission::findByName('movies.show-all','api'))){
             if($request->has("available")){
-                $movies=Movie::available((bool)$request->input('available'))->withCount('likes');
+                if($request->input('available')=="true"){
+                    $movies=Movie::available(true)->withCount('likes');
+                }else{
+                    $movies=Movie::available(false)->withCount('likes');
+                }
             }else{
                 $movies=Movie::withCount('likes');
             }
@@ -44,7 +53,12 @@ class MoviesController extends Controller
             $direction=$request->input('direction');
         }
 
-        $movies=$movies->orderBy($order_by,$direction)->paginate(10);
+        $n_records=10;
+        if($request->has('n_records') && is_int($request->input('n_records'))){
+            $n_records=$request->input('n_records');
+        }
+
+        $movies=$movies->orderBy($order_by,$direction)->paginate($n_records);
         return MovieResource::collection($movies);
     }
 
@@ -59,11 +73,12 @@ class MoviesController extends Controller
         //Permissions and validations for this method are MovieRequest $request
         $nMovie=Movie::create([
             'title' => $request->input('title'),
-            'description' => $request->input('description'),
+            'description' => ($request->has('description')?$request->input('description'):null),
             'sale_price' => $request->input('sale_price'),
             'rental_price' => $request->input('rental_price'),
             'available' => $request->input('available'),
-            'stock' => $request->input('stock')
+            'stock' => $request->input('stock'),
+            'image' => ($request->has('image')?$request->input('image'):null)
         ]);
         return response()->json([
             'message' => 'Movie created successfully.',
@@ -82,7 +97,7 @@ class MoviesController extends Controller
         $movie=Movie::find($id);
         if(!is_null($movie)){
             return response()->json([
-                'data' => MovieResource::collection($movie)
+                'data' => $movie
             ], 200);
         }else{
             return response()->json([
@@ -118,8 +133,8 @@ class MoviesController extends Controller
                 $changes['new_rental_price']=$request->input('rental_price');
                 $movie->rental_price=$request->input('rental_price');
             }
-            $movie->available=$request->input('available');
             $movie->description=$request->input('description');
+            $movie->image=($request->has('image')?$request->input('image'):null);
             $movie->stock=$request->input('stock');
 
             $movie->save();
@@ -132,7 +147,7 @@ class MoviesController extends Controller
             }
 
             return response()->json([
-                'message' => 'Movie created successfully.',
+                'message' => 'Movie updated successfully.',
                 'data'  =>  $movie
             ], 201);
         }else{
@@ -197,5 +212,15 @@ class MoviesController extends Controller
         }else{
             return response()->json(['error' => 'This action is unauthorized'], 401);
         }
+    }
+
+    public function like($id_movie){
+        $user=auth()->user();
+        $movie=Movie::find($id_movie);
+        if(is_null($movie)){
+            return response()->json(['message' => 'Movie not found'], 404);
+        }
+        $movie->likes()->sync([$user->id_user]);
+        return response()->json(['message' => 'Like saved successfully'], 201);
     }
 }
