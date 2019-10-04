@@ -15,15 +15,19 @@ use Illuminate\Http\Request;
 
 
 Route::group(['prefix' => 'roles'], function () {
-    Route::get('/', 'RolesController@index');//Returns a list of roles
-    Route::get('{id_role}', 'RolesController@show');//Returns a single role information
+    Route::get('/', 'RolesAndPermissionsController@indexRoles');//Returns a list of roles
+});
+
+Route::group(['prefix' => 'permissions'], function () {
+    Route::get('/', 'RolesAndPermissionsController@indexPermissions');//Returns a list of roles
 });
 
 Route::group(['prefix' => 'users'], function () {
-    Route::post('/', 'Auth\UsersController@register');//Register a new user in the application (also send a verification email)
-    Route::get('{id_user}/verification', 'UserController@resendVerification');//Resend the verification email
-    Route::post('password', 'Auth\ResetPasswordController@sendResetLinkEmail');//Creates a reset token and send an reset url by email
-    Route::patch('password', 'Auth\ResetPasswordController@doReset');//Update the user's password
+    Route::post('/', 'UsersController@register');//Register a new user in the application (also send a verification email)
+    Route::get('{id_user}/verified', 'UsersController@resendVerification');//Resend the verification email
+    Route::patch('{id_user}/verified', 'UsersController@verifyUser');//Verify a user given the token and email
+    Route::post('{id_user}/password', 'UsersController@sendResetLinkEmail');//Creates a reset token and sends it by email
+    Route::patch('{id_user}/password', 'UsersController@doReset');//Update the user's password
     Route::put('{id_user}/role', 'UsersController@changeRole');//Update the user's role
 });
 
@@ -37,17 +41,21 @@ Route::group(['prefix' => 'users/login'], function () {
 Route::group(['prefix' => 'movies'], function () {
     Route::get('/', 'MoviesController@index');//Show a list of movies
     Route::post('/', 'MoviesController@store');//Creates a new movie
-    Route::post('/{id_movie}', 'MoviesController@show');//Show a specific movie
+    Route::get('/{id_movie}', 'MoviesController@show');//Show a specific movie
     Route::put('/{id_movie}', 'MoviesController@update');//Update a specific movie
     Route::delete('/{id_movie}', 'MoviesController@destroy');//Delete a specific movie
     Route::patch('/{id_movie}/available', 'MoviesController@remove');//Change the available field of the movie
+});
+
+Route::group(['prefix' => 'movies/{id_movie}/likes'], function () {
+    Route::post('/', 'MoviesController@like');//Creates a new movie rental record
 });
 
 Route::group(['prefix' => 'movies/{id_movie}/rentals'], function () {
     Route::post('/', 'MoviesRentalsController@store');//Creates a new movie rental record
 });
 
-Route::group(['prefix' => 'movies/{id_movie}/rentals/{id_rental}/return'], function () {
+Route::group(['prefix' => 'movies/{id_movie}/rentals/{id_rental}/returns'], function () {
     Route::post('/', 'MoviesReturnsController@store');//Creates a new movie return record
 });
 

@@ -3,17 +3,26 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
-class RolesController extends Controller
+class RolesAndPermissionsController extends Controller
 {
+
+    public function __construct(){
+        $this->middleware('jwt');
+    }
+
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        if(auth()->user()->hasPermissionTo(Permission::findByName('users.change-role','api'))){
+            return Role::all();
+        }
     }
 
     /**

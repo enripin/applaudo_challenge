@@ -15,6 +15,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/users/verify/{token}', 'Auth\VerificationController@verifyUser');
-Route::post('/users/password/reset', 'Auth\ResetPasswordController@doReset');
-Route::get('/users/password/reset/{token}', 'Auth\ResetPasswordController@getResetForm');
+Route::get('/users/{id_user}/verified', 'UsersController@verifyUser');//Verification link send by email to new users
+Route::get('/users/{id_user}/password', 'UsersController@getResetForm');//Display a form to change password
+Route::post('/users/{id_user}/password', 'UsersController@doReset')->name('do-reset-password');//Make the password change
